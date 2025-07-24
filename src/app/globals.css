@@ -1,0 +1,326 @@
+/* src/app/globals.css */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Dark Academia Theme Styles */
+:root {
+  --da-primary: #43302b;
+  --da-secondary: #846358;
+  --da-tertiary: #977669;
+  --da-accent: #d2bab0;
+  --da-background: #fdf8f6;
+  --da-surface: #f2e8e5;
+  --da-text: #2c1810;
+  --da-text-secondary: #5d4037;
+  --da-border: #e0cec7;
+  --da-gold: #f4b41f;
+  --da-gold-dark: #dc9815;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+body {
+  color: var(--da-text);
+  background: var(--da-background);
+  position: relative;
+}
+
+/* Dark Academia Background Effects */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(212, 186, 176, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(151, 118, 105, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(132, 99, 88, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-weight: 700;
+  color: var(--da-primary);
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 3rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 2.25rem;
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 1.875rem;
+  line-height: 1.4;
+}
+
+p {
+  margin-bottom: 1rem;
+  color: var(--da-text-secondary);
+}
+
+/* Reading Typography */
+.reading-content {
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: var(--da-text);
+  max-width: 65ch;
+  margin: 0 auto;
+}
+
+.reading-content h1,
+.reading-content h2,
+.reading-content h3 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.reading-content p {
+  margin-bottom: 1.5rem;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--da-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--da-accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--da-secondary);
+}
+
+/* Book Gallery Styles */
+.book-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.book-card {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.book-card:hover {
+  transform: translateY(-8px) rotateY(-5deg);
+}
+
+.book-cover {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 8px;
+  box-shadow: 
+    0 4px 8px rgba(67, 48, 43, 0.1),
+    0 8px 24px rgba(67, 48, 43, 0.1);
+  transition: box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.book-card:hover .book-cover {
+  box-shadow: 
+    0 8px 16px rgba(67, 48, 43, 0.2),
+    0 16px 32px rgba(67, 48, 43, 0.15);
+}
+
+.book-cover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(244, 180, 31, 0.1) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(67, 48, 43, 0.1) 100%
+  );
+  pointer-events: none;
+}
+
+.book-title {
+  margin-top: 1rem;
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--da-primary);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Highlight Styles */
+.highlight {
+  position: relative;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.highlight-yellow {
+  background-color: rgba(255, 235, 59, 0.3);
+}
+
+.highlight-blue {
+  background-color: rgba(33, 150, 243, 0.3);
+}
+
+.highlight-green {
+  background-color: rgba(76, 175, 80, 0.3);
+}
+
+.highlight-pink {
+  background-color: rgba(233, 30, 99, 0.3);
+}
+
+.highlight-purple {
+  background-color: rgba(156, 39, 176, 0.3);
+}
+
+.highlight:hover {
+  transform: scale(1.02);
+}
+
+/* Loading Animations */
+.loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--da-surface) 25%,
+    var(--da-accent) 50%,
+    var(--da-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading-shimmer 2s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Page Transitions */
+.page-transition {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Academic Decorations */
+.academic-border {
+  position: relative;
+  padding: 2rem;
+}
+
+.academic-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid var(--da-gold);
+  border-radius: 8px;
+  opacity: 0.6;
+}
+
+.academic-border::after {
+  content: '❦';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--da-background);
+  padding: 0 1rem;
+  font-size: 1.5rem;
+  color: var(--da-gold);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .book-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  .reading-content {
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .academic-border {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-gallery {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+}
