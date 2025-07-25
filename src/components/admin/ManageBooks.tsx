@@ -1,8 +1,8 @@
-// src/components/admin/ManageBooks.tsx - Create this file
+// src/components/admin/ManageBooks.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/components/auth/AuthProvider'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function ManageBooks() {
   const { user } = useAuth()
@@ -148,5 +148,3 @@ export function ManageBooks() {
     </div>
   )
 }
-
-// ---
