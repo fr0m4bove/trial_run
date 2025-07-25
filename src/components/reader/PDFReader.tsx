@@ -1,4 +1,3 @@
-// src/components/reader/PDFReader.tsx
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -10,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
-// Configure PDF.js worker
+// Configure PDF.js worker - use the CDN version for reliability
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
 
 export type Theme = 'cozy-cabin' | 'midnight-library' | 'rainy-day'
@@ -30,7 +29,7 @@ interface BookmarkData {
 }
 
 export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps) {
-  const { user } = useAuth()
+  const { currentUser } = useAuth()
   const [currentTheme, setCurrentTheme] = useState<Theme>('cozy-cabin')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
@@ -46,17 +45,20 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Generate a stable ID for the book if bookId isn't provided
   const getBookmarkId = () => {
     return bookId || btoa(pdfUrl).replace(/[^a-zA-Z0-9]/g, '').substring(0, 20)
   }
 
+  // Load bookmark on mount
   useEffect(() => {
     loadBookmark()
-  }, [user, pdfUrl])
+  }, [currentUser, pdfUrl])
 
   useEffect(() => {
     loadPDF()
     
+    // Cleanup function
     return () => {
       if (pdfDoc) {
         pdfDoc.destroy()
@@ -71,15 +73,16 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
   }, [pdfDoc, currentPage])
 
   const loadBookmark = async () => {
-    if (!user) return
+    if (!currentUser) return
 
     try {
-      const bookmarkRef = doc(db, 'users', user.uid, 'bookmarks', getBookmarkId())
+      const bookmarkRef = doc(db, 'users', currentUser.uid, 'bookmarks', getBookmarkId())
       const bookmarkDoc = await getDoc(bookmarkRef)
       
       if (bookmarkDoc.exists()) {
         const data = bookmarkDoc.data() as BookmarkData
         setIsBookmarked(true)
+        // We'll set the current page after the PDF loads
         if (data.currentPage) {
           setTimeout(() => {
             setCurrentPage(data.currentPage)
@@ -92,11 +95,11 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
   }
 
   const saveBookmark = async () => {
-    if (!user || !totalPages) return
+    if (!currentUser || !totalPages) return
 
     setSavingBookmark(true)
     try {
-      const bookmarkRef = doc(db, 'users', user.uid, 'bookmarks', getBookmarkId())
+      const bookmarkRef = doc(db, 'users', currentUser.uid, 'bookmarks', getBookmarkId())
       const bookmarkData: BookmarkData = {
         currentPage,
         totalPages,
@@ -107,6 +110,7 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
       await setDoc(bookmarkRef, bookmarkData)
       setIsBookmarked(true)
       
+      // Show success feedback
       const originalText = isBookmarked ? 'Bookmark Updated!' : 'Bookmarked!'
       const button = document.getElementById('bookmark-btn')
       if (button) {
@@ -135,6 +139,7 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
         throw new Error('No PDF URL provided')
       }
 
+      // Method 1: Try to fetch as blob first (handles CORS better)
       try {
         console.log('Attempting to fetch PDF as blob...')
         const response = await fetch(pdfUrl)
@@ -146,8 +151,10 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
         const blob = await response.blob()
         console.log('Blob fetched successfully, size:', blob.size)
         
+        // Convert blob to ArrayBuffer
         const arrayBuffer = await blob.arrayBuffer()
         
+        // Load PDF from ArrayBuffer
         const loadingTask = pdfjsLib.getDocument({
           data: arrayBuffer,
           cMapUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/cmaps/`,
@@ -169,13 +176,14 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
       } catch (fetchError: any) {
         console.error('Blob fetch failed, trying direct URL:', fetchError)
         
+        // Method 2: Fallback to direct URL loading
         const loadingTask = pdfjsLib.getDocument({
           url: pdfUrl,
           withCredentials: false,
           cMapUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/cmaps/`,
           cMapPacked: true,
-          disableRange: true,
-          disableStream: true,
+          disableRange: true, // Disable range requests
+          disableStream: true, // Disable streaming
         })
         
         loadingTask.onProgress = (data: any) => {
@@ -225,21 +233,24 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
       }
       
       const containerWidth = containerRef.current?.clientWidth || 800
-      const maxWidth = Math.min(containerWidth * 0.8, 900) * 0.85
+      const maxWidth = Math.min(containerWidth * 0.8, 900) * 0.85 // Reduced by 15%
       
       const viewport = page.getViewport({ scale: 1 })
       const scale = maxWidth / viewport.width
       const scaledViewport = page.getViewport({ scale })
 
+      // Set canvas dimensions
       canvas.height = scaledViewport.height
       canvas.width = scaledViewport.width
       canvas.style.width = `${scaledViewport.width}px`
       canvas.style.height = `${scaledViewport.height}px`
 
       if (useVintageEffect || currentTheme === 'midnight-library' || currentTheme === 'rainy-day') {
+        // Use vintage paper for all themes
         context.fillStyle = '#f4e8d0'
         context.fillRect(0, 0, canvas.width, canvas.height)
         
+        // Add paper texture
         const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height)
         gradient.addColorStop(0, 'rgba(244, 232, 208, 0)')
         gradient.addColorStop(0.4, 'rgba(232, 220, 192, 0.2)')
@@ -247,6 +258,7 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
         context.fillStyle = gradient
         context.fillRect(0, 0, canvas.width, canvas.height)
         
+        // Add subtle noise/grain
         const grainDensity = currentTheme === 'midnight-library' ? 2000 : 3000
         for (let i = 0; i < grainDensity; i++) {
           const x = Math.random() * canvas.width
@@ -258,16 +270,19 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
           context.fillRect(x, y, 1, 1)
         }
         
+        // Create temporary canvas for PDF rendering
         const tempCanvas = document.createElement('canvas')
         tempCanvas.width = canvas.width
         tempCanvas.height = canvas.height
         const tempContext = tempCanvas.getContext('2d')
         
         if (tempContext) {
+          // Add font style for midnight library
           if (currentTheme === 'midnight-library') {
-            tempContext.font = 'Georgia, serif'
+            tempContext.font = 'Georgia, serif' // This will be overridden by PDF, but sets a baseline
           }
           
+          // Render PDF to temporary canvas
           const renderContext = {
             canvasContext: tempContext,
             viewport: scaledViewport,
@@ -275,37 +290,46 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
           
           await page.render(renderContext).promise
           
+          // Process the image data to remove white background
           const imageData = tempContext.getImageData(0, 0, tempCanvas.width, tempCanvas.height)
           const data = imageData.data
           
+          // Remove white background and apply theme-specific text color
           for (let i = 0; i < data.length; i += 4) {
             const r = data[i]
             const g = data[i + 1]
             const b = data[i + 2]
             
+            // If pixel is white or near-white, make it transparent
             if (r > 240 && g > 240 && b > 240) {
-              data[i + 3] = 0
+              data[i + 3] = 0 // Set alpha to 0 (transparent)
             } else if (currentTheme === 'midnight-library') {
-              data[i] = Math.max(0, r - 30)
-              data[i + 1] = Math.max(0, g - 20)
-              data[i + 2] = Math.min(255, b + 10)
+              // Make text slightly blue-tinted for midnight library
+              data[i] = Math.max(0, r - 30) // Less red
+              data[i + 1] = Math.max(0, g - 20) // Slightly less green
+              data[i + 2] = Math.min(255, b + 10) // Slightly more blue
             } else {
+              // Darken the text slightly for vintage feel
               data[i] = Math.max(0, r - 20)
               data[i + 1] = Math.max(0, g - 20)
               data[i + 2] = Math.max(0, b - 20)
             }
           }
           
+          // Put processed image back
           tempContext.putImageData(imageData, 0, 0)
           
+          // Draw the processed PDF onto our themed background
           context.drawImage(tempCanvas, 0, 0)
           
+          // Add final theme touches
           context.globalCompositeOperation = 'multiply'
           context.fillStyle = 'rgba(245, 222, 179, 0.1)'
           context.fillRect(0, 0, canvas.width, canvas.height)
           context.globalCompositeOperation = 'source-over'
         }
       } else {
+        // Normal rendering without vintage effect
         context.clearRect(0, 0, canvas.width, canvas.height)
         
         const renderContext = {
@@ -443,6 +467,7 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
         alignItems: 'center', justifyContent: 'center', padding: '2rem'
       }}>
         
+        {/* Top Controls */}
         <div style={{
           position: 'absolute', top: '20px', left: '20px', right: '20px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10
@@ -459,7 +484,7 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
           }}>{bookTitle}</h1>
           
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            {user && (
+            {currentUser && (
               <button 
                 id="bookmark-btn"
                 onClick={saveBookmark}
@@ -495,6 +520,7 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
           />
         )}
 
+        {/* PDF Canvas with Theme Effects */}
         <div style={{
           background: 'rgba(255, 255, 255, 0.1)', 
           backdropFilter: 'blur(20px)',
@@ -505,6 +531,7 @@ export function PDFReader({ pdfUrl, bookTitle, bookId, onClose }: PDFReaderProps
           maxHeight: 'calc(100vh - 200px)', 
           overflow: 'auto'
         }}>
+          {/* Canvas container - theme aware */}
           <div style={{
             position: 'relative',
             background: (useVintageEffect || currentTheme === 'midnight-library' || currentTheme === 'rainy-day') ? 'transparent' : '#2c3e50',

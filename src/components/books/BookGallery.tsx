@@ -1,4 +1,4 @@
-// src/components/books/BookGallery.tsx
+// src/components/books/BookGallery.tsx - Updated to use custom PDF reader
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -22,6 +22,7 @@ export function BookGallery() {
       setLoading(true)
       setError(null)
       
+      // Get all books from Firestore
       const booksQuery = query(
         collection(db, 'books'),
         orderBy('createdAt', 'desc')
@@ -33,6 +34,7 @@ export function BookGallery() {
       querySnapshot.forEach((doc) => {
         const data = doc.data()
         
+        // Create book object with proper defaults
         const book: Book = {
           id: doc.id,
           title: data.title || 'Untitled',
@@ -60,6 +62,7 @@ export function BookGallery() {
         fetchedBooks.push(book)
       })
       
+      // Filter for published books only
       const publishedBooks = fetchedBooks.filter(book => 
         book.status === 'published' || book.isPublished === true
       )
@@ -240,6 +243,7 @@ export function BookGallery() {
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
+        {/* Section Header */}
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📖</div>
           
@@ -288,6 +292,7 @@ export function BookGallery() {
           </p>
         </div>
 
+        {/* Books Grid */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
@@ -311,6 +316,7 @@ export function BookGallery() {
               }}
               onClick={() => setSelectedBook(book)}
             >
+              {/* Book Cover */}
               <div style={{
                 width: '180px',
                 height: '270px',
@@ -362,8 +368,48 @@ export function BookGallery() {
                     📚<br/>{book.title}
                   </div>
                 )}
+                
+                {/* Hover Overlay */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0, left: 0, right: 0, bottom: 0,
+                  background: 'rgba(244, 180, 31, 0.15)',
+                  opacity: 0,
+                  transition: 'opacity 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{
+                    background: 'rgba(253, 248, 246, 0.95)',
+                    borderRadius: '50%',
+                    width: '50px', height: '50px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+                  }}>
+                    📖
+                  </div>
+                </div>
+
+                {/* Book Info Overlay */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '8px', left: '8px', right: '8px',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  padding: '0.5rem',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  opacity: 0,
+                  transition: 'opacity 0.3s ease'
+                }}>
+                  <div>📄 {formatFileSize(book.fileSize)}</div>
+                  <div>📅 {formatDate(book.uploadedAt)}</div>
+                </div>
               </div>
 
+              {/* Book Title & Description */}
               <div style={{ textAlign: 'center', maxWidth: '180px' }}>
                 <h3 style={{
                   fontFamily: 'Crimson Text, Georgia, serif',
@@ -397,6 +443,7 @@ export function BookGallery() {
           ))}
         </div>
 
+        {/* Decorative Footer */}
         <div style={{
           textAlign: 'center',
           marginTop: '5rem',
@@ -414,11 +461,11 @@ export function BookGallery() {
         </div>
       </div>
 
+      {/* Custom PDF Reader */}
       {selectedBook && (
         <PDFReader
           pdfUrl={`/api/pdf-proxy?url=${encodeURIComponent(selectedBook.pdfUrl)}`}
           bookTitle={selectedBook.title}
-          bookId={selectedBook.id}
           onClose={() => setSelectedBook(null)}
         />
       )}

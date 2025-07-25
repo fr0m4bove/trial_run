@@ -1,4 +1,4 @@
-// src/components/admin/AdminDashboard.tsx
+// src/components/admin/AdminDashboard.tsx - Updated with smaller cards (20% smaller)
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -6,10 +6,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 
 export function AdminDashboard() {
-  const { user } = useAuth()
+  const { currentUser } = useAuth()
   const [stats, setStats] = useState({
     totalBooks: 0,
-    totalUsers: 1,
+    totalUsers: 1, // At least the admin user
     recentActivity: []
   })
 
@@ -30,6 +30,7 @@ export function AdminDashboard() {
         padding: '2rem'
       }}>
         
+        {/* Welcome Header */}
         <div style={{
           background: 'rgba(253, 248, 246, 0.95)',
           backdropFilter: 'blur(20px)',
@@ -57,12 +58,13 @@ export function AdminDashboard() {
                 color: '#5d4037',
                 margin: 0
               }}>
-                Welcome back, {user?.displayName}! Manage your literary sanctuary.
+                Welcome back, {currentUser?.displayName}! Manage your literary sanctuary.
               </p>
             </div>
           </div>
         </div>
 
+        {/* Quick Stats - Made smaller */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -157,12 +159,14 @@ export function AdminDashboard() {
           </div>
         </div>
 
+        {/* Action Cards - Made 20% smaller */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
           gap: '1.5rem'
         }}>
           
+          {/* Add New Book */}
           <Link href="/admin/books/new" style={{ textDecoration: 'none' }}>
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
@@ -217,6 +221,7 @@ export function AdminDashboard() {
             </div>
           </Link>
 
+          {/* Manage Books */}
           <Link href="/admin/books" style={{ textDecoration: 'none' }}>
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
@@ -271,6 +276,7 @@ export function AdminDashboard() {
             </div>
           </Link>
 
+          {/* User Management */}
           <Link href="/admin/users" style={{ textDecoration: 'none' }}>
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
@@ -325,6 +331,7 @@ export function AdminDashboard() {
             </div>
           </Link>
 
+          {/* Analytics */}
           <Link href="/admin/analytics" style={{ textDecoration: 'none' }}>
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
@@ -380,6 +387,7 @@ export function AdminDashboard() {
           </Link>
         </div>
 
+        {/* Quick Quote */}
         <div style={{
           textAlign: 'center',
           marginTop: '3rem',

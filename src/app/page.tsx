@@ -7,7 +7,6 @@ export default function HomePage() {
     <div>
       <Header />
       
-      {/* Hero Section */}
       <section style={{ 
         minHeight: '100vh',
         background: `
@@ -24,7 +23,6 @@ export default function HomePage() {
         padding: '2rem'
       }}>
         
-        {/* Background Elements */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -38,7 +36,6 @@ export default function HomePage() {
           opacity: 0.8
         }}></div>
 
-        {/* Decorative Elements */}
         <div style={{
           position: 'absolute',
           top: '80px',
@@ -61,13 +58,11 @@ export default function HomePage() {
           opacity: 0.5
         }}></div>
 
-        {/* Corner Flourishes */}
         <div style={{ position: 'absolute', top: '20px', left: '20px', fontSize: '2rem', color: 'rgba(244, 180, 31, 0.6)', fontFamily: 'serif' }}>❦</div>
         <div style={{ position: 'absolute', top: '20px', right: '20px', fontSize: '2rem', color: 'rgba(244, 180, 31, 0.6)', fontFamily: 'serif', transform: 'scaleX(-1)' }}>❦</div>
         <div style={{ position: 'absolute', bottom: '20px', left: '20px', fontSize: '2rem', color: 'rgba(244, 180, 31, 0.6)', fontFamily: 'serif', transform: 'rotate(180deg)' }}>❦</div>
         <div style={{ position: 'absolute', bottom: '20px', right: '20px', fontSize: '2rem', color: 'rgba(244, 180, 31, 0.6)', fontFamily: 'serif', transform: 'rotate(180deg) scaleX(-1)' }}>❦</div>
 
-        {/* Main Content */}
         <div style={{ 
           position: 'relative',
           zIndex: 10,
@@ -140,7 +135,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Book Gallery Section */}
       <BookGallery />
     </div>
   )

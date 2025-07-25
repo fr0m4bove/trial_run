@@ -1,4 +1,4 @@
-// /src/components/auth/ProtectedRoute.tsx
+// src/components/auth/ProtectedRoute.tsx
 'use client'
 
 import { useEffect } from 'react'
@@ -11,20 +11,23 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, adminOnly = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin } = useAuth()
+  const { currentUser, loading, authReady, isAdmin } = useAuth()
   const router = useRouter()
+  
+  console.log("ProtectedRoute - Current User:", currentUser ? "authenticated" : "unauthenticated");
+  console.log("ProtectedRoute - Loading:", loading);
+  console.log("ProtectedRoute - Auth Ready:", authReady);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login')
-      } else if (adminOnly && !isAdmin) {
-        router.push('/')
-      }
+    if (authReady && !loading && !currentUser) {
+      console.log("Auth ready but no user detected, redirecting to login");
+      router.push('/login');
+    } else if (authReady && !loading && currentUser && adminOnly && !isAdmin) {
+      router.push('/');
     }
-  }, [user, loading, isAdmin, adminOnly, router])
+  }, [authReady, loading, currentUser, adminOnly, isAdmin, router]);
 
-  if (loading) {
+  if (loading || !authReady) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -35,15 +38,16 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
       }}>
         <div style={{ textAlign: 'center', color: '#f4b41f' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📚</div>
-          <p>Loading...</p>
+          <p>Verifying authentication...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!user || (adminOnly && !isAdmin)) {
-    return null
+  if (!currentUser || (adminOnly && !isAdmin)) {
+    return null;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
+

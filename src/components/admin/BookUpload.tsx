@@ -1,4 +1,4 @@
-// src/components/admin/BookUpload.tsx
+// src/components/admin/BookUpload.tsx - Updated with Firebase integration
 'use client'
 
 import { useState, useRef } from 'react'
@@ -16,7 +16,7 @@ interface BookData {
 }
 
 export function BookUpload() {
-  const { user } = useAuth()
+  const { currentUser } = useAuth()
   const router = useRouter()
   const [bookData, setBookData] = useState<BookData>({
     title: '',
@@ -101,7 +101,7 @@ export function BookUpload() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!bookData.title || !bookData.pdfFile || !user) {
+    if (!bookData.title || !bookData.pdfFile || !currentUser) {
       alert('Please fill in all required fields and make sure you are logged in.')
       return
     }
@@ -110,16 +110,19 @@ export function BookUpload() {
     setUploadProgress(0)
 
     try {
+      // Generate unique filenames
       const timestamp = Date.now()
       const bookId = `book_${timestamp}`
       
       setUploadStatus('Uploading PDF...')
       
+      // Upload PDF file
       const pdfPath = `books/${bookId}/content.pdf`
       const pdfUrl = await uploadFile(bookData.pdfFile, pdfPath)
       
       setUploadStatus('Uploading cover image...')
       
+      // Upload cover image if provided
       let coverUrl = ''
       if (bookData.coverFile) {
         const coverPath = `books/${bookId}/cover.${bookData.coverFile.name.split('.').pop()}`
@@ -128,22 +131,24 @@ export function BookUpload() {
 
       setUploadStatus('Saving book data...')
       
+      // Save book metadata to Firestore
       const bookDoc = {
         title: bookData.title,
         description: bookData.description,
         pdfUrl: pdfUrl,
         coverUrl: coverUrl,
-        uploadedBy: user.uid,
-        authorId: user.uid,
+        uploadedBy: currentUser.uid,
+        authorId: currentUser.uid, // Map to your existing field
         uploadedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        // Add additional metadata
         fileSize: bookData.pdfFile.size,
         fileName: bookData.pdfFile.name,
         status: 'published',
-        isPublished: true,
-        chapters: [],
-        totalChapters: 0,
+        isPublished: true, // Map to your existing field
+        chapters: [], // Initialize as empty array
+        totalChapters: 0, // Will be updated when PDF is processed
         metadata: {
           originalFileName: bookData.pdfFile.name,
           fileSize: bookData.pdfFile.size,
@@ -158,10 +163,13 @@ export function BookUpload() {
       
       setTimeout(() => {
         alert('Book uploaded successfully!')
+        // Reset form
         setBookData({ title: '', description: '', coverFile: null, pdfFile: null })
         setUploadProgress(0)
         setIsUploading(false)
         setUploadStatus('')
+        
+        // Redirect to manage books page
         router.push('/admin/books')
       }, 1000)
       
@@ -191,6 +199,7 @@ export function BookUpload() {
         padding: '2rem'
       }}>
         
+        {/* Header */}
         <div style={{
           background: 'rgba(253, 248, 246, 0.95)',
           borderRadius: '20px',
@@ -234,6 +243,7 @@ export function BookUpload() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* Basic Information */}
           <div style={{
             background: 'rgba(253, 248, 246, 0.95)',
             borderRadius: '20px',
@@ -304,6 +314,7 @@ export function BookUpload() {
             </div>
           </div>
 
+          {/* File Uploads */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -311,6 +322,7 @@ export function BookUpload() {
             marginBottom: '2rem'
           }}>
             
+            {/* PDF Upload */}
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
               borderRadius: '20px',
@@ -371,6 +383,7 @@ export function BookUpload() {
               />
             </div>
 
+            {/* Cover Upload */}
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
               borderRadius: '20px',
@@ -445,6 +458,7 @@ export function BookUpload() {
             </div>
           </div>
 
+          {/* Upload Progress */}
           {isUploading && (
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
@@ -484,6 +498,7 @@ export function BookUpload() {
             </div>
           )}
 
+          {/* Submit Button */}
           <div style={{
             background: 'rgba(253, 248, 246, 0.95)',
             borderRadius: '20px',
@@ -494,16 +509,16 @@ export function BookUpload() {
           }}>
             <button
               type="submit"
-              disabled={!bookData.title || !bookData.pdfFile || isUploading || !user}
+              disabled={!bookData.title || !bookData.pdfFile || isUploading || !currentUser}
               style={{
-                background: (!bookData.title || !bookData.pdfFile || isUploading || !user) ? '#bfa094' : '#f4b41f',
+                background: (!bookData.title || !bookData.pdfFile || isUploading || !currentUser) ? '#bfa094' : '#f4b41f',
                 color: '#43302b',
                 border: 'none',
                 padding: '1rem 3rem',
                 borderRadius: '25px',
                 fontSize: '1.1rem',
                 fontWeight: '700',
-                cursor: (!bookData.title || !bookData.pdfFile || isUploading || !user) ? 'not-allowed' : 'pointer',
+                cursor: (!bookData.title || !bookData.pdfFile || isUploading || !currentUser) ? 'not-allowed' : 'pointer',
                 transition: 'all 0.3s ease',
                 boxShadow: '0 6px 20px rgba(244, 180, 31, 0.3)'
               }}
@@ -517,7 +532,7 @@ export function BookUpload() {
               marginTop: '1rem',
               margin: 0
             }}>
-              {!user ? 'Please log in to upload books' : 'Your book will be processed and made available to readers immediately'}
+              {!currentUser ? 'Please log in to upload books' : 'Your book will be processed and made available to readers immediately'}
             </p>
           </div>
         </form>

@@ -1,4 +1,4 @@
-// /src/components/layout/Header.tsx
+// src/components/layout/Header.tsx
 'use client'
 
 import Link from 'next/link'
@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 
 export function Header() {
-  const { user, userData, loading, logout, isAdmin } = useAuth()
+  const { currentUser, userData, loading, logout, isAdmin } = useAuth()
   const router = useRouter()
 
   const handleSignOut = async () => {
@@ -39,7 +39,6 @@ export function Header() {
         justifyContent: 'space-between'
       }}>
         
-        {/* Logo */}
         <Link href="/" style={{
           display: 'flex',
           alignItems: 'center',
@@ -58,13 +57,12 @@ export function Header() {
           </h1>
         </Link>
 
-        {/* Navigation */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '2rem'
         }}>
-          {user && (
+          {currentUser && (
             <nav style={{
               display: 'flex',
               alignItems: 'center',
@@ -99,10 +97,9 @@ export function Header() {
             </nav>
           )}
 
-          {/* User Section */}
           {loading ? (
             <div style={{ color: '#d2bab0' }}>Loading...</div>
-          ) : user ? (
+          ) : currentUser ? (
             <div style={{
               display: 'flex',
               alignItems: 'center',

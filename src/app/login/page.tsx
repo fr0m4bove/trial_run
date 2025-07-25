@@ -1,4 +1,4 @@
-// /src/app/login/page.tsx
+// src/app/login/page.tsx
 'use client'
 
 import { useEffect } from 'react'
@@ -6,14 +6,15 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
-  const { user, loading, signInWithGoogle } = useAuth()
+  const { currentUser, loading, authReady, signInWithGoogle } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) {
-      router.push('/')
+    if (authReady && currentUser) {
+      console.log("User already authenticated, redirecting to home");
+      router.push('/');
     }
-  }, [user, loading, router])
+  }, [authReady, currentUser, router]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -24,7 +25,7 @@ export default function LoginPage() {
     }
   }
 
-  if (loading) {
+  if (!authReady || loading) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -35,7 +36,7 @@ export default function LoginPage() {
       }}>
         <div style={{ textAlign: 'center', color: '#f4b41f' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📚</div>
-          <p>Loading...</p>
+          <p>Checking authentication status...</p>
         </div>
       </div>
     )
