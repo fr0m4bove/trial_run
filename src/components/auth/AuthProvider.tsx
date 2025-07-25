@@ -2,10 +2,18 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User as FirebaseUser, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth'
+import { 
+  User as FirebaseUser, 
+  onAuthStateChanged, 
+  signInWithRedirect,
+  getRedirectResult,
+  signOut, 
+  GoogleAuthProvider 
+} from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { User } from '@/types/user'
+import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
   user: User | null
@@ -30,11 +38,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   const isAdmin = user?.isAdmin || user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
 
+  // Check for redirect result on mount
   useEffect(() => {
-    // Check if auth is initialized
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth)
+        if (result) {
+          console.log('Redirect sign-in successful:', result.user.email)
+          // Redirect to home page after successful sign-in
+          router.push('/')
+        }
+      } catch (error: any) {
+        console.error('Redirect result error:', error)
+        if (error.code === 'auth/invalid-api-key') {
+          console.error('Invalid API key - check Vercel environment variables')
+        }
+      }
+    }
+    
+    handleRedirectResult()
+  }, [router])
+
+  useEffect(() => {
     if (!auth) {
       console.error('Firebase auth not initialized');
       setLoading(false);
@@ -47,12 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (firebaseUser) {
         try {
-          // Get or create user document
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
           
           if (userDoc.exists()) {
             const userData = userDoc.data() as User
-            // Update last login
             await updateDoc(doc(db, 'users', firebaseUser.uid), {
               lastLogin: new Date(),
               displayName: firebaseUser.displayName,
@@ -60,7 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             })
             setUser({ ...userData, lastLogin: new Date() })
           } else {
-            // Create new user
             const newUser: User = {
               uid: firebaseUser.uid,
               email: firebaseUser.email!,
@@ -100,47 +126,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log('Starting Google sign-in...');
+      console.log('Starting Google sign-in with redirect...');
       const provider = new GoogleAuthProvider();
       
-      // Configure the provider
       provider.setCustomParameters({
         prompt: 'select_account'
       });
 
-      // Try to sign in with popup
-      const result = await signInWithPopup(auth, provider);
-      console.log('Sign-in successful:', result.user.email);
-      
-      // The onAuthStateChanged listener will handle the user setup
+      // Use redirect instead of popup
+      await signInWithRedirect(auth, provider);
+      // User will be redirected to Google, then back to your app
       
     } catch (error: any) {
       console.error('Sign-in error:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
-      
-      // Provide user-friendly error messages
-      let errorMessage = 'Failed to sign in. Please try again.';
-      
-      switch (error.code) {
-        case 'auth/popup-closed-by-user':
-          errorMessage = 'Sign-in cancelled';
-          break;
-        case 'auth/popup-blocked':
-          errorMessage = 'Please allow popups for this site';
-          break;
-        case 'auth/unauthorized-domain':
-          errorMessage = 'This domain is not authorized for sign-in';
-          break;
-        case 'auth/operation-not-allowed':
-          errorMessage = 'Google sign-in is not enabled';
-          break;
-        case 'auth/invalid-api-key':
-          errorMessage = 'Invalid configuration. Please contact support.';
-          break;
-      }
-      
-      throw new Error(errorMessage);
+      throw error;
     }
   }
 
@@ -153,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signOut(auth)
       console.log('User signed out successfully');
+      router.push('/')
     } catch (error) {
       console.error('Error signing out:', error)
       throw error
