@@ -1,54 +1,21 @@
-// src/components/layout/Header.tsx - Update your existing header
+// /src/components/layout/Header.tsx
 'use client'
 
 import Link from 'next/link'
-import { useAuth } from '@/components/auth/AuthProvider'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 
 export function Header() {
-  const { user, loading, logout, isAdmin } = useAuth()
+  const { user, userData, loading, logout, isAdmin } = useAuth()
+  const router = useRouter()
 
   const handleSignOut = async () => {
     try {
       await logout()
+      router.push('/')
     } catch (error) {
       console.error('Sign out failed:', error)
     }
-  }
-
-  if (loading) {
-    return (
-      <header style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-        background: 'rgba(44, 24, 16, 0.95)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(244, 180, 31, 0.2)',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-        height: '80px'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '1rem 2rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%'
-        }}>
-          <div style={{
-            width: '20px',
-            height: '20px',
-            border: '2px solid #f4b41f',
-            borderTop: '2px solid transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-        </div>
-      </header>
-    )
   }
 
   return (
@@ -72,172 +39,128 @@ export function Header() {
         justifyContent: 'space-between'
       }}>
         
-        {/* Logo Section */}
-        <div style={{
+        {/* Logo */}
+        <Link href="/" style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.75rem'
+          gap: '0.75rem',
+          textDecoration: 'none'
         }}>
-          <div style={{
-            fontSize: '1.5rem',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-          }}>📚</div>
-          
+          <div style={{ fontSize: '1.5rem' }}>📚</div>
           <h1 style={{
             fontFamily: 'Crimson Text, Georgia, serif',
             fontSize: '1.5rem',
             fontWeight: '700',
             color: '#f4b41f',
-            margin: 0,
-            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-            letterSpacing: '-0.01em'
+            margin: 0
           }}>
             Book Sanctuary
           </h1>
-        </div>
+        </Link>
 
-        {/* Navigation & User Section */}
+        {/* Navigation */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '2rem'
         }}>
-          
-          {/* Navigation Links */}
           {user && (
             <nav style={{
               display: 'flex',
               alignItems: 'center',
               gap: '2rem'
             }}>
-              <a href="/" style={{
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: '0.95rem',
+              <Link href="/" style={{
                 color: '#d2bab0',
                 textDecoration: 'none',
-                fontWeight: '500',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                transition: 'all 0.3s ease',
-                border: '1px solid transparent'
+                fontWeight: '500'
               }}>
                 Library
-              </a>
+              </Link>
               
               {isAdmin && (
-                <a href="/admin" style={{
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                  fontSize: '0.95rem',
-                  color: '#d2bab0',
-                  textDecoration: 'none',
-                  fontWeight: '500',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  transition: 'all 0.3s ease',
-                  border: '1px solid transparent'
-                }}>
-                  Admin
-                </a>
+                <>
+                  <Link href="/admin" style={{
+                    color: '#d2bab0',
+                    textDecoration: 'none',
+                    fontWeight: '500'
+                  }}>
+                    Admin
+                  </Link>
+                  <Link href="/admin/books/new" style={{
+                    color: '#d2bab0',
+                    textDecoration: 'none',
+                    fontWeight: '500'
+                  }}>
+                    Upload Book
+                  </Link>
+                </>
               )}
             </nav>
           )}
 
           {/* User Section */}
-          {user ? (
+          {loading ? (
+            <div style={{ color: '#d2bab0' }}>Loading...</div>
+          ) : user ? (
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '1rem'
             }}>
-              {/* User Info */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
-              }}>
-                {user.photoURL && (
-                  <img
-                    src={user.photoURL}
-                    alt={user.displayName}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      border: '2px solid rgba(244, 180, 31, 0.3)'
-                    }}
-                  />
-                )}
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{
-                    fontFamily: 'Inter, system-ui, sans-serif',
-                    fontSize: '0.9rem',
-                    fontWeight: '500',
-                    color: '#f4b41f'
-                  }}>
-                    {user.displayName}
-                  </div>
-                  {isAdmin && (
-                    <div style={{
-                      fontSize: '0.75rem',
-                      color: '#bfa094',
-                      fontWeight: '500'
-                    }}>
-                      Administrator
-                    </div>
-                  )}
+              {userData?.photoURL && (
+                <img
+                  src={userData.photoURL}
+                  alt={userData.displayName}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    border: '2px solid rgba(244, 180, 31, 0.3)'
+                  }}
+                />
+              )}
+              <div>
+                <div style={{ color: '#f4b41f', fontSize: '0.9rem' }}>
+                  {userData?.displayName}
                 </div>
+                {isAdmin && (
+                  <div style={{ color: '#bfa094', fontSize: '0.75rem' }}>
+                    Administrator
+                  </div>
+                )}
               </div>
-
-              {/* Sign Out Button */}
               <button
                 onClick={handleSignOut}
                 style={{
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                  fontSize: '0.85rem',
                   color: '#d2bab0',
                   background: 'transparent',
                   border: '1px solid rgba(212, 186, 176, 0.3)',
                   padding: '0.5rem 1rem',
                   borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#f4b41f'
-                  e.currentTarget.style.color = '#f4b41f'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(212, 186, 176, 0.3)'
-                  e.currentTarget.style.color = '#d2bab0'
+                  cursor: 'pointer'
                 }}
               >
                 Sign Out
               </button>
             </div>
           ) : (
-            <a href="/auth" style={{ textDecoration: 'none' }}>
+            <Link href="/login">
               <button style={{
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: '0.9rem',
                 color: '#43302b',
                 backgroundColor: '#f4b41f',
                 border: 'none',
                 padding: '0.75rem 1.5rem',
                 borderRadius: '25px',
                 fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(244, 180, 31, 0.3)',
-                transition: 'all 0.3s ease',
-                textShadow: 'none'
+                cursor: 'pointer'
               }}>
                 Sign In
               </button>
-            </a>
+            </Link>
           )}
         </div>
       </div>
     </header>
   )
 }
-
-// ---

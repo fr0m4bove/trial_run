@@ -1,7 +1,7 @@
-// src/app/layout.tsx - Update your existing layout
+// /src/app/layout.tsx
 import type { Metadata } from 'next'
 import './globals.css'
-import { AuthProvider } from '@/components/auth/AuthProvider'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 export const metadata: Metadata = {
   title: 'Book Sanctuary - A Beautiful Reading Experience',
@@ -26,5 +26,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-// ---

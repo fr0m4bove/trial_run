@@ -1,4 +1,4 @@
-// src/app/admin/books/page.tsx - Updated ManageBooks page
+// src/app/admin/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -7,10 +7,9 @@ import { collection, query, orderBy, getDocs, doc, deleteDoc, updateDoc } from '
 import { ref, deleteObject } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
 import { Book } from '@/types/book'
-import { useAuth } from '@/components/auth/AuthProvider'
+import { useAuth } from '@/contexts/AuthContext'
 
 export const dynamic = "force-dynamic";
-
 
 function ManageBooks() {
   const { user } = useAuth()
@@ -30,7 +29,6 @@ function ManageBooks() {
       setLoading(true)
       setError(null)
       
-      // Query all books, ordered by creation date (newest first)
       const booksQuery = query(
         collection(db, 'books'),
         orderBy('createdAt', 'desc')
@@ -63,21 +61,18 @@ function ManageBooks() {
 
     setDeletingId(book.id)
     try {
-      // Delete files from storage
       if (book.pdfUrl) {
         const pdfRef = ref(storage, book.pdfUrl)
-        await deleteObject(pdfRef).catch(() => {}) // Ignore if file doesn't exist
+        await deleteObject(pdfRef).catch(() => {})
       }
       
       if (book.coverUrl) {
         const coverRef = ref(storage, book.coverUrl)
-        await deleteObject(coverRef).catch(() => {}) // Ignore if file doesn't exist
+        await deleteObject(coverRef).catch(() => {})
       }
       
-      // Delete document from Firestore
       await deleteDoc(doc(db, 'books', book.id))
       
-      // Update local state
       setBooks(books.filter(b => b.id !== book.id))
       
       alert('Book deleted successfully!')
@@ -97,7 +92,6 @@ function ManageBooks() {
         status: newStatus
       })
       
-      // Update local state
       setBooks(books.map(b => 
         b.id === book.id ? { ...b, status: newStatus } : b
       ))
@@ -191,7 +185,6 @@ function ManageBooks() {
         padding: '2rem'
       }}>
         
-        {/* Header */}
         <div style={{
           background: 'rgba(253, 248, 246, 0.95)',
           borderRadius: '20px',
@@ -281,7 +274,6 @@ function ManageBooks() {
         )}
 
         {books.length === 0 ? (
-          /* No Books State */
           <div style={{
             background: 'rgba(253, 248, 246, 0.95)',
             borderRadius: '20px',
@@ -323,7 +315,6 @@ function ManageBooks() {
             </a>
           </div>
         ) : (
-          /* Books List */
           <div style={{
             display: 'grid',
             gap: '1.5rem'
@@ -347,7 +338,6 @@ function ManageBooks() {
                   alignItems: 'center'
                 }}>
                   
-                  {/* Book Cover */}
                   <div style={{
                     width: '120px',
                     height: '160px',
@@ -397,7 +387,6 @@ function ManageBooks() {
                     )}
                   </div>
 
-                  {/* Book Info */}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
                       <h3 style={{
@@ -445,7 +434,6 @@ function ManageBooks() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
