@@ -1,9 +1,4 @@
-// next.config.js
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverActions: true,
-  },
   images: {
     domains: ['firebasestorage.googleapis.com'],
   },
@@ -11,8 +6,6 @@ const nextConfig = {
     config.resolve.alias.canvas = false;
     return config;
   },
-}
+};
 
-module.exports = nextConfig
-
-// ---
+module.exports = nextConfig;
