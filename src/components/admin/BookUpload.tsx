@@ -1,8 +1,8 @@
-// src/components/admin/BookUpload.tsx - Updated with Firebase integration
+// src/components/admin/BookUpload.tsx
 'use client'
 
 import { useState, useRef } from 'react'
-import { useAuth } from '@/components/auth/AuthProvider'
+import { useAuth } from '@/contexts/AuthContext'
 import { db, storage } from '@/lib/firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
@@ -110,19 +110,16 @@ export function BookUpload() {
     setUploadProgress(0)
 
     try {
-      // Generate unique filenames
       const timestamp = Date.now()
       const bookId = `book_${timestamp}`
       
       setUploadStatus('Uploading PDF...')
       
-      // Upload PDF file
       const pdfPath = `books/${bookId}/content.pdf`
       const pdfUrl = await uploadFile(bookData.pdfFile, pdfPath)
       
       setUploadStatus('Uploading cover image...')
       
-      // Upload cover image if provided
       let coverUrl = ''
       if (bookData.coverFile) {
         const coverPath = `books/${bookId}/cover.${bookData.coverFile.name.split('.').pop()}`
@@ -131,24 +128,22 @@ export function BookUpload() {
 
       setUploadStatus('Saving book data...')
       
-      // Save book metadata to Firestore
       const bookDoc = {
         title: bookData.title,
         description: bookData.description,
         pdfUrl: pdfUrl,
         coverUrl: coverUrl,
         uploadedBy: user.uid,
-        authorId: user.uid, // Map to your existing field
+        authorId: user.uid,
         uploadedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        // Add additional metadata
         fileSize: bookData.pdfFile.size,
         fileName: bookData.pdfFile.name,
         status: 'published',
-        isPublished: true, // Map to your existing field
-        chapters: [], // Initialize as empty array
-        totalChapters: 0, // Will be updated when PDF is processed
+        isPublished: true,
+        chapters: [],
+        totalChapters: 0,
         metadata: {
           originalFileName: bookData.pdfFile.name,
           fileSize: bookData.pdfFile.size,
@@ -163,13 +158,10 @@ export function BookUpload() {
       
       setTimeout(() => {
         alert('Book uploaded successfully!')
-        // Reset form
         setBookData({ title: '', description: '', coverFile: null, pdfFile: null })
         setUploadProgress(0)
         setIsUploading(false)
         setUploadStatus('')
-        
-        // Redirect to manage books page
         router.push('/admin/books')
       }, 1000)
       
@@ -199,7 +191,6 @@ export function BookUpload() {
         padding: '2rem'
       }}>
         
-        {/* Header */}
         <div style={{
           background: 'rgba(253, 248, 246, 0.95)',
           borderRadius: '20px',
@@ -243,7 +234,6 @@ export function BookUpload() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Basic Information */}
           <div style={{
             background: 'rgba(253, 248, 246, 0.95)',
             borderRadius: '20px',
@@ -314,7 +304,6 @@ export function BookUpload() {
             </div>
           </div>
 
-          {/* File Uploads */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -322,7 +311,6 @@ export function BookUpload() {
             marginBottom: '2rem'
           }}>
             
-            {/* PDF Upload */}
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
               borderRadius: '20px',
@@ -383,7 +371,6 @@ export function BookUpload() {
               />
             </div>
 
-            {/* Cover Upload */}
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
               borderRadius: '20px',
@@ -458,7 +445,6 @@ export function BookUpload() {
             </div>
           </div>
 
-          {/* Upload Progress */}
           {isUploading && (
             <div style={{
               background: 'rgba(253, 248, 246, 0.95)',
@@ -498,7 +484,6 @@ export function BookUpload() {
             </div>
           )}
 
-          {/* Submit Button */}
           <div style={{
             background: 'rgba(253, 248, 246, 0.95)',
             borderRadius: '20px',
