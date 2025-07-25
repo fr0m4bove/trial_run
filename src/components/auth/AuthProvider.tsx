@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { 
   User as FirebaseUser, 
   onAuthStateChanged, 
-  signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
   signOut, 
   GoogleAuthProvider 
@@ -42,26 +42,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = user?.isAdmin || user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
 
-  // Check for redirect result on mount
+  // Check for redirect result on mount (for redirect flow)
   useEffect(() => {
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth)
         if (result) {
           console.log('Redirect sign-in successful:', result.user.email)
-          // Redirect to home page after successful sign-in
-          router.push('/')
+          // The auth state change handler will take care of the rest
         }
       } catch (error: any) {
         console.error('Redirect result error:', error)
-        if (error.code === 'auth/invalid-api-key') {
-          console.error('Invalid API key - check Vercel environment variables')
-        }
+        // Don't throw, just log - this is expected if no redirect happened
       }
     }
     
     handleRedirectResult()
-  }, [router])
+  }, [])
 
   useEffect(() => {
     if (!auth) {
@@ -114,6 +111,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       setLoading(false)
+    }, (error) => {
+      console.error('Auth state change error:', error)
+      setLoading(false)
     })
 
     return unsubscribe
@@ -126,19 +126,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log('Starting Google sign-in with redirect...');
+      console.log('Starting Google sign-in with popup...');
       const provider = new GoogleAuthProvider();
       
+      // Force account selection
       provider.setCustomParameters({
         prompt: 'select_account'
       });
 
-      // Use redirect instead of popup
-      await signInWithRedirect(auth, provider);
-      // User will be redirected to Google, then back to your app
+      // Add scopes
+      provider.addScope('profile');
+      provider.addScope('email');
+
+      // Try popup first (usually works better)
+      try {
+        const result = await signInWithPopup(auth, provider);
+        console.log('Popup sign-in successful:', result.user.email);
+        // The auth state change handler will take care of setting up the user
+        return;
+      } catch (popupError: any) {
+        console.error('Popup sign-in failed:', popupError);
+        
+        // If popup blocked, inform the user
+        if (popupError.code === 'auth/popup-blocked') {
+          alert('Pop-up was blocked. Please allow pop-ups for this site and try again.');
+          throw popupError;
+        }
+        
+        // For other errors, throw
+        throw popupError;
+      }
       
     } catch (error: any) {
       console.error('Sign-in error:', error);
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Authentication failed. ';
+      
+      if (error.code === 'auth/api-key-not-valid') {
+        errorMessage += 'Configuration error. Please contact support.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage += 'Network error. Please check your connection.';
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage += 'Please allow pop-ups and try again.';
+      } else {
+        errorMessage += error.message || 'Please try again.';
+      }
+      
+      alert(errorMessage);
       throw error;
     }
   }
