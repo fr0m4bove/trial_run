@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Use browserPopupRedirectResolver as suggested in Stack Overflow
       try {
-        const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver)
+        const result = await signInWithPopup(auth, provider);
         console.log('Popup sign-in successful:', result.user.email)
       } catch (popupError: any) {
         console.error('Popup failed:', popupError)
