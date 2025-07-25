@@ -9,6 +9,9 @@ import { db, storage } from '@/lib/firebase'
 import { Book } from '@/types/book'
 import { useAuth } from '@/components/auth/AuthProvider'
 
+export const dynamic = "force-dynamic";
+
+
 function ManageBooks() {
   const { user } = useAuth()
   const [books, setBooks] = useState<Book[]>([])

@@ -2,7 +2,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User as FirebaseUser, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider, browserPopupRedirectResolver } from 'firebase/auth'
+import { User as FirebaseUser, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { User } from '@/types/user'
@@ -33,23 +33,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = user?.isAdmin || user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
 
-  // Check for redirect result on mount
   useEffect(() => {
-    const checkRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth, browserPopupRedirectResolver)
-        if (result) {
-          console.log('Redirect sign-in successful:', result.user.email)
-        }
-      } catch (error) {
-        console.error('Redirect sign-in error:', error)
-      }
+    // Check if auth is initialized
+    if (!auth) {
+      console.error('Firebase auth not initialized');
+      setLoading(false);
+      return;
     }
-    checkRedirectResult()
-  }, [])
 
-  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('Auth state changed:', firebaseUser?.email || 'No user');
       setFirebaseUser(firebaseUser)
       
       if (firebaseUser) {
@@ -101,53 +94,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signInWithGoogle = async () => {
+    if (!auth) {
+      console.error('Firebase auth not initialized');
+      throw new Error('Authentication service not available');
+    }
+
     try {
-      const provider = new GoogleAuthProvider()
-      provider.addScope('email')
-      provider.addScope('profile')
+      console.log('Starting Google sign-in...');
+      const provider = new GoogleAuthProvider();
       
-      // Add custom parameters for better error handling
+      // Configure the provider
       provider.setCustomParameters({
         prompt: 'select_account'
-      })
+      });
+
+      // Try to sign in with popup
+      const result = await signInWithPopup(auth, provider);
+      console.log('Sign-in successful:', result.user.email);
       
-      // Use browserPopupRedirectResolver as suggested in Stack Overflow
-      try {
-        const result = await signInWithPopup(auth, provider);
-        console.log('Popup sign-in successful:', result.user.email)
-      } catch (popupError: any) {
-        console.error('Popup failed:', popupError)
-        
-        // If popup fails, try redirect with resolver
-        if (popupError.code === 'auth/popup-blocked' || 
-            popupError.code === 'auth/popup-closed-by-user' ||
-            popupError.code === 'auth/cancelled-popup-request') {
-          console.log('Falling back to redirect sign-in...')
-          await signInWithRedirect(auth, provider, browserPopupRedirectResolver)
-        } else {
-          throw popupError
-        }
-      }
+      // The onAuthStateChanged listener will handle the user setup
       
     } catch (error: any) {
-      console.error('Error signing in with Google:', error)
+      console.error('Sign-in error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
       
-      // Better error handling
-      if (error.code === 'auth/popup-closed-by-user') {
-        console.log('User cancelled the sign-in')
-      } else if (error.code === 'auth/unauthorized-domain') {
-        console.error('This domain is not authorized. Please add it to Firebase Console.')
-      } else if (error.code === 'auth/operation-not-allowed') {
-        console.error('Google sign-in is not enabled in Firebase Console.')
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to sign in. Please try again.';
+      
+      switch (error.code) {
+        case 'auth/popup-closed-by-user':
+          errorMessage = 'Sign-in cancelled';
+          break;
+        case 'auth/popup-blocked':
+          errorMessage = 'Please allow popups for this site';
+          break;
+        case 'auth/unauthorized-domain':
+          errorMessage = 'This domain is not authorized for sign-in';
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = 'Google sign-in is not enabled';
+          break;
+        case 'auth/invalid-api-key':
+          errorMessage = 'Invalid configuration. Please contact support.';
+          break;
       }
       
-      throw error
+      throw new Error(errorMessage);
     }
   }
 
   const logout = async () => {
+    if (!auth) {
+      console.error('Firebase auth not initialized');
+      return;
+    }
+
     try {
       await signOut(auth)
+      console.log('User signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error)
       throw error
